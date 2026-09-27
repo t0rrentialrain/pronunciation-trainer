@@ -42,13 +42,14 @@ automatically.
 ## Requirements
 
 - Python 3 with Flask (`pip install -r requirements.txt`)
-- `yt-dlp` and `ffmpeg` on your PATH (already used elsewhere in this project)
+- `yt-dlp` and `ffmpeg` on your PATH
 - A Chromium-based browser is recommended (Web Audio decode of `MediaRecorder`
   WebM/Opus output).
 
 ## Run
 
 ```bash
+git clone https://github.com/t0rrentialrain/pronunciation-trainer
 cd pronunciation-trainer
 pip install -r requirements.txt
 python app.py
@@ -63,6 +64,6 @@ context — no HTTPS needed.
   re-trimming, `meta.json`) and listed in the **Library** tab.
 - Recordings stay in the browser for the session; use **Download take** to keep
   one. They are not stored server-side.
-- If you have a `cookies.txt` in the parent folder, it's passed to `yt-dlp` for
-  age/region-gated videos.
+- For age- or region-gated videos, put a Netscape-format `cookies.txt` in the
+  folder above the app and it's passed to `yt-dlp`. Keep it out of version control.
 - Max clip length is 30s (these drills work best on a sentence or two).
