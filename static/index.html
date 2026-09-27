@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pronunciation Trainer</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>🎙️ Pronunciation Trainer</h1>
+    <nav id="tabs">
+      <button data-tab="create" class="active">Create clip</button>
+      <button data-tab="library">Library</button>
+      <button data-tab="practice" disabled>Practice</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ───────────────── Create ───────────────── -->
+    <section id="tab-create" class="tab active">
+      <div class="row">
+        <input id="yt-url" type="text" placeholder="Paste a YouTube URL…" />
+        <button id="yt-load">Load</button>
+      </div>
+
+      <div id="yt-stage" class="hidden">
+        <div id="yt-player"></div>
+
+        <!-- Step 1: rough-pick the region in the player, then fetch its audio -->
+        <div id="rough" class="row">
+          <button id="mark-start">⟦ Mark start (player)</button>
+          <button id="mark-end">Mark end ⟧</button>
+          <span id="rough-range" class="muted">0:00 → 0:05</span>
+          <button id="load-wave" class="primary">Load waveform ▼</button>
+          <span id="fetch-status" class="muted"></span>
+        </div>
+
+        <!-- Step 2: Anki-style waveform trimmer -->
+        <div id="wave-stage" class="hidden">
+          <div class="wave-title">Trim Audio: <span id="wave-name">—</span></div>
+          <div class="wave-sub muted">
+            Duration: <span id="wave-dur" class="hl">0:00.000</span> ·
+            <b>click-drag</b> to select · <b>scroll</b> to zoom
+            (<b>Shift-scroll</b> to pan) · <b>click</b> to move the playhead ·
+            <b>Space</b> to play/stop
+          </div>
+
+          <div id="wave-wrap">
+            <canvas id="wave-canvas" width="1600" height="320"></canvas>
+            <div class="wmarker wmarker-start" data-m="start"></div>
+            <div class="wmarker wmarker-end" data-m="end"></div>
+            <div class="wplayhead"></div>
+          </div>
+
+          <div class="row nudge">
+            <span class="nlabel">Start</span>
+            <button data-m="start" data-d="-1">−1s</button>
+            <button data-m="start" data-d="-0.1">−0.1</button>
+            <button data-m="start" data-d="-0.01">−.01</button>
+            <button data-m="start" data-d="0.01">+.01</button>
+            <button data-m="start" data-d="0.1">+0.1</button>
+            <button data-m="start" data-d="1">+1s</button>
+          </div>
+          <div class="row nudge">
+            <span class="nlabel">End</span>
+            <button data-m="end" data-d="-1">−1s</button>
+            <button data-m="end" data-d="-0.1">−0.1</button>
+            <button data-m="end" data-d="-0.01">−.01</button>
+            <button data-m="end" data-d="0.01">+.01</button>
+            <button data-m="end" data-d="0.1">+0.1</button>
+            <button data-m="end" data-d="1">+1s</button>
+          </div>
+
+          <div class="row wave-readout muted">
+            Start <span id="r-start" class="hl">0:00.000</span> ·
+            End <span id="r-end" class="hl">0:00.000</span> ·
+            Sel <span id="r-sel" class="hl">0.000s</span>
+            <label class="chk"><input id="r-normalize" type="checkbox" /> Normalize</label>
+          </div>
+
+          <div class="row">
+            <button id="wave-play">▶ Play (Space)</button>
+            <button id="wave-zoom-out" title="Zoom out">🔍−</button>
+            <button id="wave-zoom-in" title="Zoom in">🔍+</button>
+            <button id="wave-zoom-fit" class="ghost" title="Fit whole window">Fit</button>
+            <button id="wave-cancel" class="ghost">Cancel</button>
+            <button id="wave-save" class="primary">✂️ Save clip</button>
+            <span id="save-status" class="muted"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────────── Library ───────────────── -->
+    <section id="tab-library" class="tab">
+      <div id="clip-list" class="clip-list"></div>
+      <p id="library-empty" class="muted">No clips yet. Create one from the “Create clip” tab.</p>
+    </section>
+
+    <!-- ───────────────── Practice ───────────────── -->
+    <section id="tab-practice" class="tab">
+      <div id="practice-empty" class="muted">Pick a clip from the Library to start practicing.</div>
+
+      <div id="practice-stage" class="hidden">
+        <div class="practice-head">
+          <h2 id="practice-title">—</h2>
+          <div class="mode-switch">
+            <button data-mode="chorusing" class="active">Chorusing</button>
+            <button data-mode="listen-repeat">Listen &amp; Repeat</button>
+          </div>
+        </div>
+
+        <div id="practice-video"></div>
+        <p id="mode-hint" class="hint"></p>
+
+        <!-- Chorusing controls -->
+        <div id="ctl-chorusing" class="mode-ctl">
+          <div class="row">
+            <button id="ch-loop" class="primary">▶ Loop &amp; shadow</button>
+            <button id="ch-record">● Record take</button>
+            <button id="ch-stop" disabled>■ Stop</button>
+          </div>
+          <div id="ch-playback" class="row hidden">
+            <button id="ch-play-mix" class="primary">▶ Play mix</button>
+            <div class="fader">
+              <span>Native</span>
+              <input id="ch-fader" type="range" min="0" max="100" value="50" />
+              <span>You</span>
+            </div>
+            <button id="ch-download" class="ghost">⬇ Download take</button>
+          </div>
+        </div>
+
+        <!-- Listen & Repeat controls -->
+        <div id="ctl-listen-repeat" class="mode-ctl hidden">
+          <div class="row">
+            <label class="fader">Gap ×<span id="lr-gap-val">1.0</span>
+              <input id="lr-gap" type="range" min="100" max="200" value="100" />
+            </label>
+          </div>
+          <div class="row">
+            <button id="lr-start" class="primary">▶ Start loop (auto-record)</button>
+            <button id="lr-stop" disabled>■ Stop</button>
+          </div>
+          <div id="lr-playback" class="row hidden">
+            <button id="lr-compare" class="primary">▶ Compare (clip ⇄ you)</button>
+            <button id="lr-download" class="ghost">⬇ Download take</button>
+          </div>
+          <canvas id="lr-waves" width="900" height="160"></canvas>
+        </div>
+
+        <div id="practice-status" class="muted"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/js/audio-engine.js"></script>
+  <script src="/static/js/youtube.js"></script>
+  <script src="/static/js/wave-trimmer.js"></script>
+  <script src="/static/js/create.js"></script>
+  <script src="/static/js/library.js"></script>
+  <script src="/static/js/chorusing.js"></script>
+  <script src="/static/js/listen-repeat.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
